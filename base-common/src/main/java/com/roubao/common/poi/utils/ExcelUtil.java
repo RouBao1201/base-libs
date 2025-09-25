@@ -72,10 +72,4 @@ public class ExcelUtil {
             }
         }
     }
-
-
-    @FunctionalInterface
-    public interface RowDataConsumer<T> {
-        void accept(List<Object> rowDataList, T t);
-    }
 }

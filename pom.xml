@@ -14,9 +14,31 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.10</version>
+        <relativePath/>
+    </parent>
 
     <packaging>pom</packaging>
     <modules>
         <module>base-common</module>
+        <module>base-web-starter</module>
+        <module>base-spring-common-starter</module>
     </modules>
+
+    <!-- 可选：统一插件配置 -->
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- Spring Boot Maven 插件 -->
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>3.4.10</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>
