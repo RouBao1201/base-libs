@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
  * Spring 上下文工具类，提供静态方法获取 ApplicationContext 和 Bean
  *
  * @author SongYanBin
- * @date 2025-09-25
+ * @since 2025-09-25
  */
 @Component
 public class SpringContextHolder implements ApplicationContextAware {
