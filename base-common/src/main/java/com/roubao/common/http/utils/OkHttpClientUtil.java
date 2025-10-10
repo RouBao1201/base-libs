@@ -35,7 +35,11 @@ import java.util.concurrent.TimeUnit;
  * @since 2025/9/20
  */
 @Slf4j
-public class OkHttpClientUtil {
+public final class OkHttpClientUtil {
+
+    private OkHttpClientUtil() {
+    }
+
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
     private static final OkHttpClient defaultClient;

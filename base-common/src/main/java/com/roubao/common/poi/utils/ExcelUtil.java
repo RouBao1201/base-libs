@@ -19,7 +19,10 @@ import java.util.function.Function;
  * @since 2025/9/20
  **/
 @Slf4j
-public class ExcelUtil {
+public final class ExcelUtil {
+
+    private ExcelUtil() {
+    }
 
     public static <T> void exportXlsx(String[] headers,
                                       List<T> exportDataList,

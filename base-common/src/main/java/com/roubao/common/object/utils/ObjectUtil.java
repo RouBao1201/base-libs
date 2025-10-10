@@ -8,7 +8,9 @@ import java.util.function.Function;
  * @author SongYanBin
  * @since 2025/8/21
  */
-public class IObjectUtil {
+public final class ObjectUtil {
+
+    private ObjectUtil() {}
 
     public static <T, R> R extractFieldValue(T object, Function<T, R> fieldExtractor) {
         return extractFieldValue(object, fieldExtractor, null);
