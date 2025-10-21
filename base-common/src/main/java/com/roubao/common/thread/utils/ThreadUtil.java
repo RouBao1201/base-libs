@@ -31,7 +31,7 @@ public final class ThreadUtil {
     private static final int DEFAULT_MAX_POOL_SIZE = DEFAULT_CORE_POOL_SIZE * 2;
     private static final long DEFAULT_KEEP_ALIVE_TIME = 60L;
     private static final int DEFAULT_QUEUE_CAPACITY = 1000;
-    private static final String DEFAULT_THREAD_NAME_PREFIX = "CompletableFutureUtil-";
+    private static final String DEFAULT_THREAD_NAME_PREFIX = "ThreadUtil-";
 
     // 默认线程池实例
     private static final ThreadPoolExecutor DEFAULT_EXECUTOR;
@@ -104,7 +104,7 @@ public final class ThreadUtil {
     private static class CallerRunsPolicy implements RejectedExecutionHandler {
         @Override
         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-            log.warn("Task rejected, executing in caller thread. Pool status: {}", getPoolStatus(executor));
+            log.warn("[ThreadUtil] Task rejected, executing in caller thread. Pool status: {}", getPoolStatus(executor));
             r.run();
         }
     }
@@ -114,7 +114,7 @@ public final class ThreadUtil {
      */
     public static ThreadPoolExecutor createThreadPoolExecutor(ThreadPoolConfig config) {
         if (config == null) {
-            log.error("ThreadPoolConfig is null");
+            log.error("[ThreadUtil] ThreadPoolConfig is null");
             throw new IllegalArgumentException("ThreadPoolConfig cannot be null");
         }
         BlockingQueue<Runnable> queue = config.isPriorityQueue() ? new PriorityBlockingQueue<>(config.getQueueCapacity()) : new LinkedBlockingQueue<>(config.getQueueCapacity());
@@ -136,7 +136,7 @@ public final class ThreadUtil {
             int corePoolSize, int maxPoolSize, long keepAliveTime, TimeUnit timeUnit,
             int queueCapacity, String threadNamePrefix, RejectedExecutionHandler rejectedHandler) {
         if (corePoolSize <= 0 || maxPoolSize < corePoolSize || queueCapacity <= 0) {
-            log.error("Invalid thread pool config: core={}, max={}, queue={}", corePoolSize, maxPoolSize, queueCapacity);
+            log.error("[ThreadUtil] Invalid thread pool config: core={}, max={}, queue={}", corePoolSize, maxPoolSize, queueCapacity);
             throw new IllegalArgumentException("Invalid thread pool configuration");
         }
         return new ThreadPoolExecutor(
@@ -154,7 +154,7 @@ public final class ThreadUtil {
             int corePoolSize, int maxPoolSize, long keepAliveTime, TimeUnit timeUnit,
             int queueCapacity, String threadNamePrefix, RejectedExecutionHandler rejectedHandler) {
         if (corePoolSize <= 0 || maxPoolSize < corePoolSize) {
-            log.error("Invalid thread pool config: core={}, max={}", corePoolSize, maxPoolSize);
+            log.error("[ThreadUtil] Invalid thread pool config: core={}, max={}", corePoolSize, maxPoolSize);
             throw new IllegalArgumentException("Invalid thread pool configuration");
         }
         return new ThreadPoolExecutor(
@@ -179,21 +179,21 @@ public final class ThreadUtil {
      */
     public static <T> CompletableFuture<T> supplyAsync(Executor executor, Supplier<T> supplier) {
         if (supplier == null) {
-            log.error("Supplier is null");
+            log.info("[ThreadUtil] Supplier is null");
             throw new IllegalArgumentException("Supplier cannot be null");
         }
         try {
-            log.debug("Supplying async task to thread pool: {}", executor);
+            log.info("[ThreadUtil] Supplying async task to thread pool: {}", executor);
             CompletableFuture<T> future = CompletableFuture.supplyAsync(supplier, executor);
             TASK_COUNTER.incrementAndGet();
             future.exceptionally(throwable -> {
-                log.error("Async task failed: {}", throwable.getMessage(), throwable);
+                log.error("[ThreadUtil] Async task failed: {}", throwable.getMessage(), throwable);
                 FAILED_TASK_COUNTER.incrementAndGet();
                 throw new CompletionException(throwable);
             });
             return future;
         } catch (RejectedExecutionException e) {
-            log.error("Async task submission rejected: {}", e.getMessage(), e);
+            log.error("[ThreadUtil] Async task submission rejected: {}", e.getMessage(), e);
             FAILED_TASK_COUNTER.incrementAndGet();
             throw e;
         }
@@ -204,15 +204,15 @@ public final class ThreadUtil {
      */
     public static <T> CompletableFuture<T> supplyAsyncPriority(Executor executor, Supplier<T> supplier, int priority) {
         if (!(executor instanceof ThreadPoolExecutor) || !(((ThreadPoolExecutor) executor).getQueue() instanceof PriorityBlockingQueue)) {
-            log.error("Executor does not support priority tasks");
+            log.error("[ThreadUtil] Executor does not support priority tasks");
             throw new IllegalArgumentException("Executor must use PriorityBlockingQueue");
         }
         if (supplier == null) {
-            log.error("Supplier is null");
+            log.error("[ThreadUtil] Supplier is null");
             throw new IllegalArgumentException("Supplier cannot be null");
         }
         try {
-            log.debug("Supplying priority async task with priority {}", priority);
+            log.info("[ThreadUtil] Supplying priority async task with priority {}", priority);
             CompletableFuture<T> future = new CompletableFuture<>();
             PriorityRunnable priorityRunnable = new PriorityRunnable(() -> {
                 try {
@@ -225,13 +225,13 @@ public final class ThreadUtil {
             ((ThreadPoolExecutor) executor).execute(priorityRunnable);
             TASK_COUNTER.incrementAndGet();
             future.exceptionally(throwable -> {
-                log.error("Priority async task failed: {}", throwable.getMessage(), throwable);
+                log.error("[ThreadUtil] Priority async task failed: {}", throwable.getMessage(), throwable);
                 FAILED_TASK_COUNTER.incrementAndGet();
                 throw new CompletionException(throwable);
             });
             return future;
         } catch (RejectedExecutionException e) {
-            log.error("Priority async task submission rejected: {}", e.getMessage(), e);
+            log.error("[ThreadUtil] Priority async task submission rejected: {}", e.getMessage(), e);
             FAILED_TASK_COUNTER.incrementAndGet();
             throw e;
         }
@@ -249,21 +249,21 @@ public final class ThreadUtil {
      */
     public static CompletableFuture<Void> runAsync(Executor executor, Runnable runnable) {
         if (runnable == null) {
-            log.error("Runnable is null");
+            log.error("[ThreadUtil] Runnable is null");
             throw new IllegalArgumentException("Runnable cannot be null");
         }
         try {
-            log.debug("Running async task in thread pool: {}", executor);
+            log.info("[ThreadUtil] Running async task in thread pool: {}", executor);
             CompletableFuture<Void> future = CompletableFuture.runAsync(runnable, executor);
             TASK_COUNTER.incrementAndGet();
             future.exceptionally(throwable -> {
-                log.error("Async task failed: {}", throwable.getMessage(), throwable);
+                log.error("[ThreadUtil] Async task failed: {}", throwable.getMessage(), throwable);
                 FAILED_TASK_COUNTER.incrementAndGet();
                 throw new CompletionException(throwable);
             });
             return future;
         } catch (RejectedExecutionException e) {
-            log.error("Async task submission rejected: {}", e.getMessage(), e);
+            log.error("[ThreadUtil] Async task submission rejected: {}", e.getMessage(), e);
             FAILED_TASK_COUNTER.incrementAndGet();
             throw e;
         }
@@ -274,15 +274,15 @@ public final class ThreadUtil {
      */
     public static CompletableFuture<Void> runAsyncPriority(Executor executor, Runnable runnable, int priority) {
         if (!(executor instanceof ThreadPoolExecutor) || !(((ThreadPoolExecutor) executor).getQueue() instanceof PriorityBlockingQueue)) {
-            log.error("Executor does not support priority tasks");
+            log.error("[ThreadUtil] Executor does not support priority tasks");
             throw new IllegalArgumentException("Executor must use PriorityBlockingQueue");
         }
         if (runnable == null) {
-            log.error("Runnable is null");
+            log.info("[ThreadUtil] Runnable is null");
             throw new IllegalArgumentException("Runnable cannot be null");
         }
         try {
-            log.debug("Running priority async task with priority {}", priority);
+            log.info("[ThreadUtil] Running priority async task with priority {}", priority);
             CompletableFuture<Void> future = new CompletableFuture<>();
             PriorityRunnable priorityRunnable = new PriorityRunnable(() -> {
                 try {
@@ -295,13 +295,13 @@ public final class ThreadUtil {
             ((ThreadPoolExecutor) executor).execute(priorityRunnable);
             TASK_COUNTER.incrementAndGet();
             future.exceptionally(throwable -> {
-                log.error("Priority async task failed: {}", throwable.getMessage(), throwable);
+                log.error("[ThreadUtil] Priority async task failed: {}", throwable.getMessage(), throwable);
                 FAILED_TASK_COUNTER.incrementAndGet();
                 throw new CompletionException(throwable);
             });
             return future;
         } catch (RejectedExecutionException e) {
-            log.error("Priority async task submission rejected: {}", e.getMessage(), e);
+            log.error("[ThreadUtil] Priority async task submission rejected: {}", e.getMessage(), e);
             FAILED_TASK_COUNTER.incrementAndGet();
             throw e;
         }
@@ -335,10 +335,10 @@ public final class ThreadUtil {
      */
     public static CompletableFuture<Void> allOf(List<CompletableFuture<?>> futures) {
         if (CollUtil.isEmpty(futures)) {
-            log.warn("Future list is empty");
+            log.warn("[ThreadUtil] Future list is empty");
             return CompletableFuture.completedFuture(null);
         }
-        log.info("Combining {} futures with allOf", futures.size());
+        log.info("[ThreadUtil] Combining {} futures with allOf", futures.size());
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
@@ -347,10 +347,10 @@ public final class ThreadUtil {
      */
     public static CompletableFuture<Object> anyOf(List<CompletableFuture<?>> futures) {
         if (CollUtil.isEmpty(futures)) {
-            log.warn("Future list is empty");
+            log.warn("[ThreadUtil] Future list is empty");
             return CompletableFuture.completedFuture(null);
         }
-        log.info("Combining {} futures with anyOf", futures.size());
+        log.info("[ThreadUtil] Combining {} futures with anyOf", futures.size());
         return CompletableFuture.anyOf(futures.toArray(new CompletableFuture[0]));
     }
 
@@ -366,11 +366,11 @@ public final class ThreadUtil {
      */
     public static <T> List<CompletableFuture<T>> supplyAllAsync(Executor executor, List<Supplier<T>> suppliers) {
         if (CollUtil.isEmpty(suppliers)) {
-            log.warn("Supplier list is empty");
+            log.warn("[ThreadUtil] Supplier list is empty");
             return new ArrayList<>();
         }
         List<CompletableFuture<T>> futures = new ArrayList<>(suppliers.size());
-        log.info("Supplying all {} async tasks to thread pool: {}", suppliers.size(), executor);
+        log.info("[ThreadUtil] Supplying all {} async tasks to thread pool: {}", suppliers.size(), executor);
         for (Supplier<T> supplier : suppliers) {
             futures.add(supplyAsync(executor, supplier));
         }
@@ -382,10 +382,10 @@ public final class ThreadUtil {
      */
     public static <T> CompletableFuture<T> supplyAsyncScheduled(Supplier<T> supplier, long delay, TimeUnit unit) {
         if (supplier == null) {
-            log.error("Supplier is null");
+            log.info("[ThreadUtil] Supplier is null");
             throw new IllegalArgumentException("Supplier cannot be null");
         }
-        log.info("Scheduling async task with delay {} {}", delay, unit);
+        log.info("[ThreadUtil] Scheduling async task with delay {} {}", delay, unit);
         CompletableFuture<T> future = new CompletableFuture<>();
         DEFAULT_SCHEDULED_EXECUTOR.schedule(() -> {
             try {
@@ -397,7 +397,7 @@ public final class ThreadUtil {
         }, delay, unit);
         TASK_COUNTER.incrementAndGet();
         return future.exceptionally(throwable -> {
-            log.error("Scheduled async task failed: {}", throwable.getMessage(), throwable);
+            log.error("[ThreadUtil] Scheduled async task failed: {}", throwable.getMessage(), throwable);
             FAILED_TASK_COUNTER.incrementAndGet();
             throw new CompletionException(throwable);
         });
@@ -408,10 +408,10 @@ public final class ThreadUtil {
      */
     public static CompletableFuture<Void> runAsyncScheduled(Runnable runnable, long delay, TimeUnit unit) {
         if (runnable == null) {
-            log.error("Runnable is null");
+            log.info("[ThreadUtil] Runnable is null");
             throw new IllegalArgumentException("Runnable cannot be null");
         }
-        log.info("Scheduling async Runnable task with delay {} {}", delay, unit);
+        log.info("[ThreadUtil] Scheduling async Runnable task with delay {} {}", delay, unit);
         CompletableFuture<Void> future = new CompletableFuture<>();
         DEFAULT_SCHEDULED_EXECUTOR.schedule(() -> {
             try {
@@ -423,7 +423,7 @@ public final class ThreadUtil {
         }, delay, unit);
         TASK_COUNTER.incrementAndGet();
         return future.exceptionally(throwable -> {
-            log.error("Scheduled async task failed: {}", throwable.getMessage(), throwable);
+            log.error("[ThreadUtil] Scheduled async task failed: {}", throwable.getMessage(), throwable);
             FAILED_TASK_COUNTER.incrementAndGet();
             throw new CompletionException(throwable);
         });
@@ -489,23 +489,23 @@ public final class ThreadUtil {
      */
     public static void shutdown() {
         if (SHUTDOWN_INITIATED.compareAndSet(false, true)) {
-            log.info("Shutting down CompletableFutureUtil, executor status: {}, scheduled status: {}",
+            log.info("[ThreadUtil] Shutting down CompletableFutureUtil, executor status: {}, scheduled status: {}",
                     getDefaultPoolStatus(), getScheduledPoolStatus());
             DEFAULT_EXECUTOR.shutdown();
             DEFAULT_SCHEDULED_EXECUTOR.shutdown();
             try {
                 if (!DEFAULT_EXECUTOR.awaitTermination(60, TimeUnit.SECONDS)) {
-                    log.warn("Default executor did not terminate within 60 seconds, forcing shutdown");
+                    log.warn("[ThreadUtil] Default executor did not terminate within 60 seconds, forcing shutdown");
                     DEFAULT_EXECUTOR.shutdownNow();
                 }
                 if (!DEFAULT_SCHEDULED_EXECUTOR.awaitTermination(60, TimeUnit.SECONDS)) {
-                    log.warn("Scheduled executor did not terminate within 60 seconds, forcing shutdown");
+                    log.warn("[ThreadUtil] Scheduled executor did not terminate within 60 seconds, forcing shutdown");
                     DEFAULT_SCHEDULED_EXECUTOR.shutdownNow();
                 }
-                log.info("ThreadPool shutdown completed, total tasks: {}, failed tasks: {}",
+                log.info("[ThreadUtil] ThreadPool shutdown completed, total tasks: {}, failed tasks: {}",
                         getTaskCount(), getFailedTaskCount());
             } catch (InterruptedException e) {
-                log.error("Shutdown interrupted: {}", e.getMessage(), e);
+                log.error("[ThreadUtil] Shutdown interrupted: {}", e.getMessage(), e);
                 DEFAULT_EXECUTOR.shutdownNow();
                 DEFAULT_SCHEDULED_EXECUTOR.shutdownNow();
                 Thread.currentThread().interrupt();

@@ -40,5 +40,19 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <release>21</release>
+                    <!-- 指定 JDK 21 路径（关键！） -->
+                    <jdkToolchain>
+                        <version>21</version>
+                    </jdkToolchain>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 </project>
